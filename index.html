@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#10131a" />
     <title>Turnclock — Cubing Competition Desk</title>
-    <link rel="icon" type="image/x-icon" href="/logo.png">
+    <link rel="icon" type="image/x-icon" href="turnclock/logo.png">
     <style>
       :root {
         color-scheme: dark;
@@ -151,6 +151,7 @@
       .timer-panel::after { position: absolute; right: -42px; bottom: -88px; width: 240px; height: 240px; border: 1px solid rgba(215,243,106,.08); border-radius: 50%; box-shadow: 0 0 0 27px rgba(215,243,106,.025), 0 0 0 55px rgba(215,243,106,.018); content: ""; pointer-events: none; }
       .timer-face { display: grid; flex: 1; place-items: center; text-align: center; }
       .timer-value { color: var(--lime); font-size: clamp(64px, 10vw, 94px); font-variant-numeric: tabular-nums; font-weight: 750; letter-spacing: -.075em; line-height: 1; transition: color .15s; }
+      .timer-value.text-label { font-size: clamp(30px, 5vw, 46px); letter-spacing: -.035em; white-space: nowrap; }
       .timer-caption { min-height: 18px; margin-top: 11px; color: var(--muted); font-size: 12px; }
       .timer-panel.warning .timer-value, .timer-panel.warning .timer-caption { color: var(--orange); }
       .timer-panel.penalty .timer-value, .timer-panel.penalty .timer-caption { color: var(--red); }
@@ -494,7 +495,7 @@
         if (timerState === "idle" || timerState === "dnf") {
           timerButton.textContent = blindfolded ? "Start solve" : "Start inspection";
           if (timerState === "idle") {
-            timerValue.textContent = "15.00";
+            showTimerValue("15.00");
             timerCaption.textContent = blindfolded ? "Ready to solve" : "Ready for inspection";
           }
         }
@@ -504,28 +505,33 @@
         return Math.max(0, seconds).toFixed(2);
       }
 
+      function showTimerValue(value, isLabel = false) {
+        timerValue.textContent = value;
+        timerValue.classList.toggle("text-label", isLabel);
+      }
+
       function updateTimer() {
         const elapsed = (performance.now() - timerStartedAt) / 1000;
         if (["inspection", "warning", "penalty"].includes(timerState)) {
           if (elapsed < 8) {
-            timerValue.textContent = formatSeconds(15 - elapsed);
+            showTimerValue(formatSeconds(15 - elapsed));
             timerCaption.textContent = "Inspection";
             setTimerState("inspection");
           } else if (elapsed < 12) {
-            timerValue.textContent = "8 seconds";
-            timerCaption.textContent = "8 seconds elapsed";
+            showTimerValue(elapsed < 9.2 ? "8 seconds" : formatSeconds(15 - elapsed), elapsed < 9.2);
+            timerCaption.textContent = elapsed < 9.2 ? "Inspection warning" : "Inspection";
             setTimerState("warning");
           } else if (elapsed < 15) {
-            timerValue.textContent = "12 seconds";
-            timerCaption.textContent = "12 seconds elapsed";
+            showTimerValue(elapsed < 13.2 ? "12 seconds" : formatSeconds(15 - elapsed), elapsed < 13.2);
+            timerCaption.textContent = elapsed < 13.2 ? "Inspection warning" : "Inspection";
             setTimerState("penalty");
           } else if (elapsed < 17) {
-            timerValue.textContent = "+2";
+            showTimerValue("+2");
             timerCaption.textContent = "Inspection over — 2 second penalty";
             timerButton.textContent = "Start solve (+2)";
             setTimerState("penalty");
           } else {
-            timerValue.textContent = "DNF";
+            showTimerValue("DNF");
             timerCaption.textContent = "Inspection time exceeded";
             timerButton.textContent = isBlindfoldedEvent() ? "Start solve" : "Start inspection";
             setTimerState("dnf");
@@ -537,7 +543,7 @@
           }
           timerFrame = requestAnimationFrame(updateTimer);
         } else if (timerState === "solving") {
-          timerValue.textContent = formatSeconds(elapsed);
+          showTimerValue(formatSeconds(elapsed));
           timerCaption.textContent = "Solving · press space to stop";
           timerFrame = requestAnimationFrame(updateTimer);
         }
@@ -556,7 +562,7 @@
         const inspectionElapsed = (performance.now() - timerStartedAt) / 1000;
         window.cancelAnimationFrame(timerFrame);
         if (!skipInspection && inspectionElapsed >= 17) {
-          timerValue.textContent = "DNF";
+          showTimerValue("DNF");
           timerCaption.textContent = "Inspection time exceeded";
           timerButton.textContent = isBlindfoldedEvent() ? "Start solve" : "Start inspection";
           setTimerState("dnf");
@@ -576,7 +582,7 @@
         const penalty = Number(timerCaption.dataset.penalty || 0);
         const result = (elapsed + penalty).toFixed(2) + (penalty ? "+" : "");
         window.cancelAnimationFrame(timerFrame);
-        timerValue.textContent = result;
+        showTimerValue(result);
         timerCaption.textContent = penalty ? "Solve complete · +2 inspection penalty" : "Solve complete";
         timerButton.textContent = isBlindfoldedEvent() ? "Start solve" : "Start inspection";
         timerCaption.dataset.penalty = "0";
@@ -598,7 +604,7 @@
         window.cancelAnimationFrame(timerFrame);
         timerCaption.dataset.penalty = "0";
         inspectionDnfRecorded = false;
-        timerValue.textContent = "15.00";
+        showTimerValue("15.00");
         timerCaption.textContent = "Ready for inspection";
         setTimerState("idle");
         updateTimerMode();
