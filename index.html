@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#10131a" />
+    <title>Turnclock — Cubing Competition Desk</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #10131a;
+        --panel: #191e28;
+        --panel-raised: #202633;
+        --line: #2c3442;
+        --text: #f3f5f8;
+        --muted: #9ba5b5;
+        --lime: #d7f36a;
+        --orange: #ffb454;
+        --red: #ff6677;
+        --blue: #9cb8ff;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        color: var(--text);
+        background:
+          radial-gradient(ellipse at 82% -12%, rgba(156, 184, 255, .12), transparent 34rem),
+          var(--bg);
+      }
+      button, select { font: inherit; }
+      button, a, select { -webkit-tap-highlight-color: transparent; }
+      button:focus-visible, a:focus-visible, select:focus-visible {
+        outline: 2px solid var(--lime);
+        outline-offset: 3px;
+      }
+      .shell { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        min-height: 88px;
+        border-bottom: 1px solid rgba(255,255,255,.08);
+      }
+      .brand { display: flex; align-items: center; gap: 12px; }
+      .brand-mark {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        place-items: center;
+        color: #14180c;
+        background: var(--lime);
+        border-radius: 12px;
+        font-size: 20px;
+        font-weight: 900;
+        transform: rotate(-5deg);
+      }
+      .brand-name { font-size: 17px; font-weight: 750; letter-spacing: -.03em; }
+      .brand-sub { margin-top: 2px; color: var(--muted); font-size: 11px; letter-spacing: .11em; text-transform: uppercase; }
+      nav { display: flex; align-items: center; gap: 24px; }
+      nav a { color: #c6ceda; font-size: 13px; text-decoration: none; transition: color .18s; }
+      nav a:hover { color: var(--lime); }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        color: var(--lime);
+        font-size: 11px;
+        font-weight: 750;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+      }
+      .eyebrow::before { width: 19px; height: 1px; background: currentColor; content: ""; }
+      main { padding: 46px 0 72px; }
+      .intro { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 26px; }
+      h1 { margin: 12px 0 7px; font-size: clamp(30px, 5vw, 46px); letter-spacing: -.055em; line-height: 1.04; }
+      .intro p { margin: 0; color: var(--muted); font-size: 14px; }
+      .live-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 11px;
+        color: #c5d0dd;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 12px rgba(215,243,106,.55); }
+      .workspace { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, .75fr); gap: 18px; align-items: stretch; }
+      .panel { background: linear-gradient(145deg, rgba(255,255,255,.025), transparent 36%), var(--panel); border: 1px solid var(--line); border-radius: 18px; }
+      .scramble-panel { min-height: 307px; padding: 22px 24px 24px; }
+      .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+      .panel-title { margin: 0; font-size: 15px; font-weight: 700; }
+      .panel-kicker { margin-top: 5px; color: var(--muted); font-size: 12px; }
+      .event-select {
+        min-width: 148px;
+        padding: 10px 34px 10px 12px;
+        color: var(--text);
+        background: var(--panel-raised);
+        border: 1px solid #394252;
+        border-radius: 9px;
+        cursor: pointer;
+      }
+      .scramble {
+        display: flex;
+        min-height: 160px;
+        align-items: center;
+        margin: 19px 0 15px;
+        padding: 20px;
+        color: #eef2f8;
+        background: rgba(8, 10, 15, .42);
+        border: 1px solid rgba(255,255,255,.055);
+        border-radius: 12px;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        font-size: clamp(15px, 2vw, 20px);
+        line-height: 1.8;
+        overflow-wrap: anywhere;
+      }
+      .scramble.placeholder { color: var(--muted); font-family: inherit; font-size: 14px; line-height: 1.5; }
+      .scramble-actions { display: flex; align-items: center; gap: 10px; }
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 40px;
+        padding: 0 14px;
+        color: var(--text);
+        background: var(--panel-raised);
+        border: 1px solid #394252;
+        border-radius: 9px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 700;
+        transition: filter .18s, transform .18s, background .18s;
+      }
+      .button:hover:not(:disabled) { filter: brightness(1.13); transform: translateY(-1px); }
+      .button:disabled { cursor: wait; opacity: .65; }
+      .button.primary { color: #171b0b; background: var(--lime); border-color: var(--lime); }
+      .scramble-count { margin-left: auto; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+
+      .timer-panel { position: relative; display: flex; min-height: 307px; flex-direction: column; padding: 22px 24px; overflow: hidden; }
+      .timer-panel::after { position: absolute; right: -42px; bottom: -88px; width: 240px; height: 240px; border: 1px solid rgba(215,243,106,.08); border-radius: 50%; box-shadow: 0 0 0 27px rgba(215,243,106,.025), 0 0 0 55px rgba(215,243,106,.018); content: ""; pointer-events: none; }
+      .timer-face { display: grid; flex: 1; place-items: center; text-align: center; }
+      .timer-value { color: var(--lime); font-size: clamp(64px, 10vw, 94px); font-variant-numeric: tabular-nums; font-weight: 750; letter-spacing: -.075em; line-height: 1; transition: color .15s; }
+      .timer-caption { min-height: 18px; margin-top: 11px; color: var(--muted); font-size: 12px; }
+      .timer-panel.warning .timer-value, .timer-panel.warning .timer-caption { color: var(--orange); }
+      .timer-panel.penalty .timer-value, .timer-panel.penalty .timer-caption { color: var(--red); }
+      .timer-panel.dnf .timer-value, .timer-panel.dnf .timer-caption { color: var(--red); }
+      .timer-panel.solving .timer-value { color: var(--blue); }
+      .timer-action { position: relative; z-index: 1; width: 100%; min-height: 44px; }
+      .timer-hint { position: relative; z-index: 1; margin-top: 12px; color: var(--muted); font-size: 11px; text-align: center; }
+      .lower-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, .75fr); gap: 18px; margin-top: 18px; }
+      .attempts-panel, .notice-panel { padding: 20px 22px; }
+      .attempts-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+      .attempts-heading { display: flex; align-items: center; gap: 10px; }
+      .attempts-header h2, .notice-panel h2 { margin: 0; font-size: 14px; }
+      .attempt-count { color: var(--muted); font-size: 11px; }
+      .clear-session { min-height: 30px; padding: 0 9px; color: var(--muted); font-size: 10px; }
+      .attempts-empty { padding: 13px 0 2px; color: var(--muted); font-size: 12px; }
+      .manual-entry { display: grid; grid-template-columns: minmax(120px, 1fr) minmax(110px, .75fr) auto; align-items: end; gap: 9px; margin: 0 0 14px; padding: 12px; background: rgba(8,10,15,.28); border-radius: 9px; }
+      .manual-field { display: grid; gap: 6px; color: var(--muted); font-size: 10px; }
+      .manual-field input, .manual-field select { width: 100%; min-height: 37px; padding: 0 9px; color: var(--text); background: var(--panel-raised); border: 1px solid #394252; border-radius: 7px; font-size: 12px; }
+      .manual-entry .button { min-height: 37px; }
+      .attempts-list { display: grid; max-height: 260px; gap: 8px; overflow-y: auto; padding-right: 5px; scrollbar-color: #596477 transparent; scrollbar-width: thin; }
+      .attempts-list::-webkit-scrollbar { width: 7px; }
+      .attempts-list::-webkit-scrollbar-thumb { background: #596477; border: 2px solid var(--panel); border-radius: 999px; }
+      .attempt-row { display: grid; grid-template-columns: 30px 1fr auto; align-items: center; gap: 10px; padding: 10px 11px; background: rgba(8,10,15,.28); border-radius: 9px; }
+      .attempt-number { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+      .attempt-event { font-size: 12px; font-weight: 700; }
+      .attempt-date { margin-top: 3px; color: var(--muted); font-size: 10px; }
+      .attempt-result { color: var(--lime); font-size: 14px; font-variant-numeric: tabular-nums; font-weight: 750; }
+      .notice-panel { display: flex; flex-direction: column; justify-content: space-between; gap: 16px; }
+      .notice-copy { margin: 9px 0 0; color: var(--muted); font-size: 12px; line-height: 1.65; }
+      .notice-copy strong { color: #e5e9ee; }
+      .notice-links { display: flex; flex-wrap: wrap; gap: 8px; }
+      .notice-links a { padding: 9px 10px; color: #d9e2f3; background: var(--panel-raised); border: 1px solid #394252; border-radius: 8px; font-size: 11px; text-decoration: none; }
+      .notice-links a:hover { border-color: var(--lime); }
+      .toast { position: fixed; right: 22px; bottom: 22px; z-index: 5; max-width: min(400px, calc(100% - 44px)); padding: 12px 15px; color: var(--text); background: #252c38; border: 1px solid #465164; border-radius: 10px; box-shadow: 0 12px 35px rgba(0,0,0,.3); font-size: 12px; }
+      .toast[hidden] { display: none; }
+      .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+      @media (max-width: 760px) {
+        .shell { width: min(100% - 28px, 560px); }
+        header { min-height: 72px; }
+        nav { gap: 14px; }
+        nav a { font-size: 11px; }
+        .workspace, .lower-grid { grid-template-columns: 1fr; }
+        .intro { align-items: start; flex-direction: column; }
+        .scramble-panel, .timer-panel { min-height: 285px; }
+        .scramble { min-height: 138px; }
+      }
+      @media (max-width: 410px) {
+        nav { gap: 10px; }
+        nav a { font-size: 10px; }
+        .brand-sub { font-size: 9px; }
+        .scramble-panel, .timer-panel { padding-right: 16px; padding-left: 16px; }
+        .panel-heading { align-items: start; flex-direction: column; }
+        .event-select { width: 100%; }
+        .manual-entry { grid-template-columns: 1fr 1fr; }
+        .manual-entry .button { grid-column: 1 / -1; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <a class="brand" href="#" aria-label="Turnclock home" style="color:inherit;text-decoration:none">
+          <span class="brand-mark" aria-hidden="true">↻</span>
+          <span>
+            <span class="brand-name">turnclock</span>
+            <span class="brand-sub" style="display:block">competition desk</span>
+          </span>
+        </a>
+        <nav aria-label="Helpful links">
+          <a href="https://cstimer.net/" target="_blank" rel="noopener noreferrer">csTimer ↗</a>
+          <a href="https://www.worldcubeassociation.org/regulations/" target="_blank" rel="noopener noreferrer">WCA Regulations ↗</a>
+        </nav>
+      </header>
+
+      <main>
+        <section class="intro" aria-labelledby="page-title">
+          <div>
+            <div class="eyebrow">Competition workspace</div>
+            <h1 id="page-title">Ready, set, solve.</h1>
+            <p>The perfect website for managing your unofficial cube competition.</p>
+          </div>
+          <span class="live-pill"><span class="live-dot" aria-hidden="true"></span> Local session</span>
+        </section>
+
+        <section class="workspace" aria-label="Scramble and timer">
+          <article class="panel scramble-panel">
+            <div class="panel-heading">
+              <div>
+                <h2 class="panel-title">Scramble generator</h2>
+                <div class="panel-kicker">Choose an event to get a scramble</div>
+              </div>
+              <label>
+                <span class="sr-only">Select an event</span>
+                <select class="event-select" id="event-select">
+                  <option value="333">3×3×3</option>
+                  <option value="222">2×2×2</option>
+                  <option value="444">4×4×4</option>
+                  <option value="555">5×5×5</option>
+                  <option value="666">6×6×6</option>
+                  <option value="777">7×7×7</option>
+                  <option value="333bf">3×3×3 Blindfolded</option>
+                  <option value="333fm">3×3×3 Fewest Moves</option>
+                  <option value="333oh">3×3×3 One-Handed</option>
+                  <option value="clock">Clock</option>
+                  <option value="minx">Megaminx</option>
+                  <option value="pyram">Pyraminx</option>
+                  <option value="skewb">Skewb</option>
+                  <option value="sq1">Square-1</option>
+                  <option value="444bf">4×4×4 Blindfolded</option>
+                  <option value="555bf">5×5×5 Blindfolded</option>
+                  <option value="333mbf">3×3×3 Multi-Blind</option>
+                </select>
+              </label>
+            </div>
+            <div class="scramble placeholder" id="scramble" aria-live="polite" aria-atomic="true">Loading your first scramble…</div>
+            <div class="scramble-actions">
+              <button class="button primary" id="new-scramble" type="button"><span aria-hidden="true">⟳</span> New scramble</button>
+              <button class="button" id="copy-scramble" type="button" disabled>Copy</button>
+              <span class="scramble-count" id="scramble-count">Scramble 1</span>
+            </div>
+          </article>
+
+          <article class="panel timer-panel" id="timer-panel">
+            <div class="panel-heading">
+              <div>
+                <h2 class="panel-title" id="timer-title">Inspection timer</h2>
+                <div class="panel-kicker" id="timer-kicker">15 seconds to inspect · then start your solve</div>
+              </div>
+            </div>
+            <div class="timer-face" aria-live="off">
+              <div>
+                <div class="timer-value" id="timer-value">15.00</div>
+                <div class="timer-caption" id="timer-caption">Ready for inspection</div>
+              </div>
+            </div>
+            <button class="button primary timer-action" id="timer-button" type="button">Start inspection</button>
+            <div class="timer-hint" id="timer-hint">Press <kbd>Space</kbd> to start / stop</div>
+          </article>
+        </section>
+
+        <section class="lower-grid" aria-label="Attempts and competition resources">
+          <article class="panel attempts-panel">
+            <div class="attempts-header">
+              <div class="attempts-heading">
+                <h2>Recent attempts</h2>
+                <span class="attempt-count" id="attempt-count">0 attempts</span>
+              </div>
+              <button class="button clear-session" id="clear-session" type="button">Clear session</button>
+            </div>
+            <form class="manual-entry" id="manual-entry">
+              <label class="manual-field" for="manual-time">
+                Time in seconds
+                <input id="manual-time" name="time" type="number" min="0.01" step="0.01" placeholder="e.g. 12.34" inputmode="decimal" required />
+              </label>
+              <label class="manual-field" for="manual-penalty">
+                Result
+                <select id="manual-penalty" name="penalty">
+                  <option value="0">No penalty</option>
+                  <option value="2">+2 penalty</option>
+                  <option value="dnf">DNF</option>
+                </select>
+              </label>
+              <button class="button primary" type="submit">Add time</button>
+            </form>
+            <div class="attempts-empty" id="attempts-empty">Completed solves will appear here.</div>
+            <div class="attempts-list" id="attempts-list"></div>
+          </article>
+          <aside class="panel notice-panel">
+            <div>
+              <h2>Competition resources</h2>
+              <p class="notice-copy"><strong>Scramble note:</strong> this page uses the community <code>cubing.js</code> generator for unofficial competitions. Do not use it to generate scrambles at an official WCA competition, instead use the official scramble program.</p>
+            </div>
+            <div class="notice-links">
+              <a href="https://cstimer.net/" target="_blank" rel="noopener noreferrer">Open csTimer ↗</a>
+              <a href="https://www.worldcubeassociation.org/regulations/" target="_blank" rel="noopener noreferrer">Read WCA Regulations ↗</a>
+              <a href="https://www.worldcubeassociation.org/regulations/scrambles/" target="_blank" rel="noopener noreferrer">Official scramble program ↗</a>
+            </div>
+          </aside>
+        </section>
+      </main>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+    <script type="module">
+      const eventSelect = document.querySelector("#event-select");
+      const scrambleElement = document.querySelector("#scramble");
+      const scrambleButton = document.querySelector("#new-scramble");
+      const copyButton = document.querySelector("#copy-scramble");
+      const scrambleCount = document.querySelector("#scramble-count");
+      const timerPanel = document.querySelector("#timer-panel");
+      const timerValue = document.querySelector("#timer-value");
+      const timerCaption = document.querySelector("#timer-caption");
+      const timerButton = document.querySelector("#timer-button");
+      const timerTitle = document.querySelector("#timer-title");
+      const timerKicker = document.querySelector("#timer-kicker");
+      const timerHint = document.querySelector("#timer-hint");
+      const attemptsList = document.querySelector("#attempts-list");
+      const attemptsEmpty = document.querySelector("#attempts-empty");
+      const attemptCount = document.querySelector("#attempt-count");
+      const clearSessionButton = document.querySelector("#clear-session");
+      const manualEntry = document.querySelector("#manual-entry");
+      const manualTime = document.querySelector("#manual-time");
+      const manualPenalty = document.querySelector("#manual-penalty");
+      const toast = document.querySelector("#toast");
+      const eventNames = new Map([...eventSelect.options].map((option) => [option.value, option.textContent]));
+      const storageKey = "turnclock-attempts-v1";
+      let scrambleText = "";
+      let scrambleNumber = 0;
+      let scrambleGeneratorPromise;
+      let timerState = "idle";
+      let timerStartedAt = 0;
+      let timerFrame = 0;
+      let inspectionDnfRecorded = false;
+      let toastTimeout = 0;
+      let attempts = loadAttempts();
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.hidden = false;
+        window.clearTimeout(toastTimeout);
+        toastTimeout = window.setTimeout(() => { toast.hidden = true; }, 3200);
+      }
+
+      function setScrambleLoading(loading) {
+        scrambleButton.disabled = loading;
+        scrambleButton.innerHTML = loading ? "Generating…" : '<span aria-hidden="true">⟳</span> New scramble';
+      }
+
+      function getScrambleGenerator() {
+        if (!scrambleGeneratorPromise) {
+          scrambleGeneratorPromise = import("https://cdn.cubing.net/v0/js/cubing/scramble")
+            .then((module) => module.randomScrambleForEvent)
+            .catch((error) => {
+              scrambleGeneratorPromise = undefined;
+              throw error;
+            });
+        }
+        return scrambleGeneratorPromise;
+      }
+
+      async function generateScramble() {
+        const eventCode = eventSelect.value;
+        setScrambleLoading(true);
+        scrambleElement.classList.add("placeholder");
+        scrambleElement.textContent = "Generating a random-state scramble…";
+        try {
+          const randomScrambleForEvent = await getScrambleGenerator();
+          const scramble = await randomScrambleForEvent(eventCode);
+          scrambleText = scramble.toString();
+          scrambleNumber += 1;
+          scrambleElement.textContent = scrambleText;
+          scrambleElement.classList.remove("placeholder");
+          scrambleCount.textContent = `Scramble ${scrambleNumber}`;
+          copyButton.disabled = false;
+        } catch (error) {
+          scrambleText = "";
+          scrambleElement.textContent = `Could not generate a scramble for ${eventNames.get(eventCode)}. Open this page from a web server, check your connection, and try again.`;
+          scrambleElement.classList.add("placeholder");
+          copyButton.disabled = true;
+          console.error("Scramble generation failed:", error);
+          showToast("Scramble generation failed. Open the page from a web server and check your connection.");
+        } finally {
+          setScrambleLoading(false);
+        }
+      }
+
+      function loadAttempts() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(storageKey) || "[]");
+          return Array.isArray(saved) ? saved.filter((attempt) =>
+            attempt && typeof attempt.event === "string" &&
+            typeof attempt.result === "string" && typeof attempt.date === "string"
+          ).slice(0, 20) : [];
+        } catch (error) {
+          console.error("Could not read saved attempts:", error);
+          showToast("Saved attempts could not be loaded from this browser.");
+          return [];
+        }
+      }
+
+      function saveAttempt(result, event = eventSelect.value) {
+        attempts.unshift({ event, result, date: new Date().toISOString() });
+        attempts = attempts.slice(0, 20);
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(attempts));
+        } catch (error) {
+          console.error("Could not save attempt:", error);
+          showToast("Attempt completed, but could not be saved in this browser.");
+        }
+        renderAttempts();
+      }
+
+      function renderAttempts() {
+        attemptsList.replaceChildren();
+        attemptsEmpty.hidden = attempts.length > 0;
+        attemptCount.textContent = `${attempts.length} ${attempts.length === 1 ? "attempt" : "attempts"}`;
+        attempts.forEach((attempt, index) => {
+          const row = document.createElement("div");
+          row.className = "attempt-row";
+          const number = document.createElement("span");
+          number.className = "attempt-number";
+          number.textContent = String(attempts.length - index).padStart(2, "0");
+          const details = document.createElement("div");
+          const event = document.createElement("div");
+          event.className = "attempt-event";
+          event.textContent = eventNames.get(attempt.event) || attempt.event;
+          const date = document.createElement("div");
+          date.className = "attempt-date";
+          date.textContent = new Date(attempt.date).toLocaleString();
+          details.append(event, date);
+          const result = document.createElement("span");
+          result.className = "attempt-result";
+          result.textContent = attempt.result;
+          row.append(number, details, result);
+          attemptsList.append(row);
+        });
+      }
+
+      function setTimerState(state) {
+        timerState = state;
+        timerPanel.classList.remove("warning", "penalty", "dnf", "solving");
+        if (state === "warning") timerPanel.classList.add("warning");
+        if (state === "penalty") timerPanel.classList.add("penalty");
+        if (state === "dnf") timerPanel.classList.add("dnf");
+        if (state === "solving") timerPanel.classList.add("solving");
+      }
+
+      function isBlindfoldedEvent() {
+        return eventSelect.value === "333bf";
+      }
+
+      function updateTimerMode() {
+        const blindfolded = isBlindfoldedEvent();
+        timerTitle.textContent = blindfolded ? "Solve timer" : "Inspection timer";
+        timerKicker.textContent = blindfolded
+          ? "Inspection skipped for 3×3×3 Blindfolded"
+          : "15 seconds to inspect · then start your solve";
+        timerHint.innerHTML = blindfolded
+          ? "Press <kbd>Space</kbd> to start / stop your solve"
+          : "Press <kbd>Space</kbd> to start / stop";
+        if (timerState === "idle" || timerState === "dnf") {
+          timerButton.textContent = blindfolded ? "Start solve" : "Start inspection";
+          if (timerState === "idle") {
+            timerValue.textContent = "15.00";
+            timerCaption.textContent = blindfolded ? "Ready to solve" : "Ready for inspection";
+          }
+        }
+      }
+
+      function formatSeconds(seconds) {
+        return Math.max(0, seconds).toFixed(2);
+      }
+
+      function updateTimer() {
+        const elapsed = (performance.now() - timerStartedAt) / 1000;
+        if (["inspection", "warning", "penalty"].includes(timerState)) {
+          if (elapsed < 8) {
+            timerValue.textContent = formatSeconds(15 - elapsed);
+            timerCaption.textContent = "Inspection";
+            setTimerState("inspection");
+          } else if (elapsed < 12) {
+            timerValue.textContent = "8 seconds";
+            timerCaption.textContent = "8 seconds elapsed";
+            setTimerState("warning");
+          } else if (elapsed < 15) {
+            timerValue.textContent = "12 seconds";
+            timerCaption.textContent = "12 seconds elapsed";
+            setTimerState("penalty");
+          } else if (elapsed < 17) {
+            timerValue.textContent = "+2";
+            timerCaption.textContent = "Inspection over — 2 second penalty";
+            timerButton.textContent = "Start solve (+2)";
+            setTimerState("penalty");
+          } else {
+            timerValue.textContent = "DNF";
+            timerCaption.textContent = "Inspection time exceeded";
+            timerButton.textContent = isBlindfoldedEvent() ? "Start solve" : "Start inspection";
+            setTimerState("dnf");
+            if (!inspectionDnfRecorded) {
+              saveAttempt("DNF");
+              inspectionDnfRecorded = true;
+            }
+            return;
+          }
+          timerFrame = requestAnimationFrame(updateTimer);
+        } else if (timerState === "solving") {
+          timerValue.textContent = formatSeconds(elapsed);
+          timerCaption.textContent = "Solving · press space to stop";
+          timerFrame = requestAnimationFrame(updateTimer);
+        }
+      }
+
+      function startInspection() {
+        window.cancelAnimationFrame(timerFrame);
+        timerStartedAt = performance.now();
+        inspectionDnfRecorded = false;
+        timerButton.textContent = "Inspecting…";
+        setTimerState("inspection");
+        updateTimer();
+      }
+
+      function startSolve(skipInspection = false) {
+        const inspectionElapsed = (performance.now() - timerStartedAt) / 1000;
+        window.cancelAnimationFrame(timerFrame);
+        if (!skipInspection && inspectionElapsed >= 17) {
+          timerValue.textContent = "DNF";
+          timerCaption.textContent = "Inspection time exceeded";
+          timerButton.textContent = isBlindfoldedEvent() ? "Start solve" : "Start inspection";
+          setTimerState("dnf");
+          saveAttempt("DNF");
+          return;
+        }
+        const penalty = !skipInspection && inspectionElapsed >= 15 ? 2 : 0;
+        timerStartedAt = performance.now();
+        timerButton.textContent = "Solving…";
+        setTimerState("solving");
+        updateTimer();
+        timerCaption.dataset.penalty = String(penalty);
+      }
+
+      function stopSolve() {
+        const elapsed = (performance.now() - timerStartedAt) / 1000;
+        const penalty = Number(timerCaption.dataset.penalty || 0);
+        const result = (elapsed + penalty).toFixed(2) + (penalty ? "+" : "");
+        window.cancelAnimationFrame(timerFrame);
+        timerValue.textContent = result;
+        timerCaption.textContent = penalty ? "Solve complete · +2 inspection penalty" : "Solve complete";
+        timerButton.textContent = isBlindfoldedEvent() ? "Start solve" : "Start inspection";
+        timerCaption.dataset.penalty = "0";
+        setTimerState("idle");
+        saveAttempt(result);
+      }
+
+      function clearSession() {
+        if (!window.confirm("Clear all saved attempts and reset the timer? This cannot be undone.")) return;
+        try {
+          localStorage.removeItem(storageKey);
+        } catch (error) {
+          console.error("Could not clear saved attempts:", error);
+          showToast("Could not clear saved attempts from this browser.");
+          return;
+        }
+        attempts = [];
+        renderAttempts();
+        window.cancelAnimationFrame(timerFrame);
+        timerCaption.dataset.penalty = "0";
+        inspectionDnfRecorded = false;
+        timerValue.textContent = "15.00";
+        timerCaption.textContent = "Ready for inspection";
+        setTimerState("idle");
+        updateTimerMode();
+        showToast("Session cleared.");
+      }
+
+      function handleTimerAction() {
+        if (timerState === "idle" || timerState === "dnf") {
+          if (isBlindfoldedEvent()) startSolve(true);
+          else startInspection();
+        }
+        else if (timerState === "inspection" || timerState === "warning" || timerState === "penalty") startSolve();
+        else if (timerState === "solving") stopSolve();
+      }
+
+      scrambleButton.addEventListener("click", generateScramble);
+      eventSelect.addEventListener("change", () => {
+        updateTimerMode();
+        generateScramble();
+      });
+      copyButton.addEventListener("click", async () => {
+        if (!scrambleText) return;
+        try {
+          await navigator.clipboard.writeText(scrambleText);
+          showToast("Scramble copied to clipboard.");
+        } catch (error) {
+          console.error("Could not copy scramble:", error);
+          showToast("Could not copy the scramble. Check clipboard permissions.");
+        }
+      });
+      timerButton.addEventListener("click", handleTimerAction);
+      clearSessionButton.addEventListener("click", clearSession);
+      manualPenalty.addEventListener("change", () => {
+        manualTime.required = manualPenalty.value !== "dnf";
+        manualTime.disabled = manualPenalty.value === "dnf";
+      });
+      manualEntry.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const penalty = manualPenalty.value;
+        if (penalty === "dnf") {
+          saveAttempt("DNF");
+        } else {
+          const seconds = Number(manualTime.value);
+          if (!Number.isFinite(seconds) || seconds <= 0) {
+            manualTime.setCustomValidity("Enter a time greater than zero.");
+            manualTime.reportValidity();
+            manualTime.setCustomValidity("");
+            return;
+          }
+          saveAttempt(`${(seconds + Number(penalty)).toFixed(2)}${penalty === "2" ? "+" : ""}`);
+        }
+        manualTime.value = "";
+        manualPenalty.value = "0";
+        manualTime.disabled = false;
+        manualTime.required = true;
+        showToast("Manual time added.");
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.code !== "Space" || event.repeat || event.target instanceof HTMLSelectElement || event.target instanceof HTMLButtonElement) return;
+        event.preventDefault();
+        handleTimerAction();
+      });
+
+      renderAttempts();
+      updateTimerMode();
+      generateScramble();
+    </script>
+  </body>
+</html>
